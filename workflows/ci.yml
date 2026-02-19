@@ -1,0 +1,28 @@
+name: dbt_Continuous_Integration
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check_code_quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-snowflake sqlfluff-adapter-snowflake
+          
+      - name: Run SQL Linter (SQLFluff)
+        run: sqlfluff lint models/ --dialect snowflake
+        # This shows you enforce coding standards!
+
+      - name: Build and Test (Dry Run)
+        run: dbt build --select state:modified --target dev
+        env:
+          DBT_SNOWFLAKE_PASSWORD: ${{ secrets.DBT_PASSWORD }}
